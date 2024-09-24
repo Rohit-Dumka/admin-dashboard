@@ -24,7 +24,7 @@ interface Props {
     mapper: string;
   }[];
   columnsData: {
-    id: string;
+    uuid: string;
     [key: string]: string | number | boolean;
   }[];
   onEdit?: (id: string) => void;
@@ -37,12 +37,15 @@ export function TableCustom(props: Props) {
   const { columnsData, columnsName, onEdit, onDelete, showEdit, showDelete } =
     props;
 
-  const totalColumns = columnsName.length + (showEdit || showDelete ? 1 : 0);
+  const totalColumns =
+    columnsName.length + 1 + (showEdit || showDelete ? 1 : 0); // +1 because of sno
 
   return (
     <Table className="overflow-hidden bg-secondary tr">
       <TableHeader>
         <TableRow className="border-border-color">
+          <TableHead>SNo</TableHead>
+
           {columnsName.map((columnName, index) => (
             <TableHead key={index}>{columnName.name}</TableHead>
           ))}
@@ -51,10 +54,11 @@ export function TableCustom(props: Props) {
       <TableBody>
         {columnsData.map((columnData, columnIndex) => (
           <TableRow key={columnIndex} className="border-border-color">
-            {Object.keys(columnData).map((column, index) => {
+            <TableCell className="font-medium">{columnIndex + 1}</TableCell>
+            {columnsName.map((column, index) => {
               return (
                 <TableCell className="font-medium" key={index}>
-                  {columnsData[columnIndex][column]}
+                  {columnsData[columnIndex][column.mapper]}
                 </TableCell>
               );
             })}
@@ -62,7 +66,7 @@ export function TableCustom(props: Props) {
               <TableCell className="text-right">
                 {showEdit && onEdit && (
                   <Button
-                    onClick={() => onEdit(columnData.id)}
+                    onClick={() => onEdit(columnData.uuid)}
                     className="ml-6"
                   >
                     Edit
@@ -70,7 +74,7 @@ export function TableCustom(props: Props) {
                 )}
                 {showDelete && onDelete && (
                   <Button
-                    onClick={() => onDelete(columnData.id)}
+                    onClick={() => onDelete(columnData.uuid)}
                     className="ml-6"
                   >
                     Delete
