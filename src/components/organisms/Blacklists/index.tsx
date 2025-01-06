@@ -1,9 +1,9 @@
+import { DialogDelete } from "@/components/molecules/DialogDelete";
 import { DialogEdit } from "@/components/molecules/DialogEdit";
 import { TableCustom } from "@/components/molecules/TableCustom";
 import { useEffect, useState } from "react";
-import { DialogDelete } from "@/components/molecules/DialogDelete";
-import groupsData from "@/utils/data/groups.json";
-import { groupFormSchema } from "@/components/organisms/Groups/schema";
+import blacklistsData from "@/utils/data/blacklist.json";
+import { blacklistFormSchema } from "@/components/organisms/Blacklists/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -11,22 +11,24 @@ import { Input } from "@/components/ui/input";
 import { Button } from "../../ui/button";
 import { DialogCreate } from "@/components/molecules/DialogCreate";
 
-export interface IGroups {
+export interface IBlacklists {
   uuid: string;
-  gname: string;
-  link: string;
+  number: string;
+  reason: string;
+  admin: string;
   [key: string]: string;
 }
 
 const columnsName = [
-  { name: "Name", mapper: "gname" },
-  { name: "Link", mapper: "link" },
+  { name: "Number", mapper: "number" },
+  { name: "Reason", mapper: "reason" },
+  { name: "Admin", mapper: "admin" },
 ];
 
-const findGroupById = (id: string, data: IGroups[]) =>
-  data.find((group) => group.uuid === id) || null;
+const findBlacklistById = (id: string, data: IBlacklists[]) =>
+  data.find((blacklist) => blacklist.uuid === id) || null;
 
-export default function Groups() {
+export default function Blacklists() {
   const [openEdit, setOpenEdit] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
@@ -35,35 +37,37 @@ export default function Groups() {
     organism: string;
     name?: string;
   } | null>(null);
-  const [columnsData, setColumnsData] = useState<IGroups[]>(groupsData);
-  const [userData, setUserData] = useState<IGroups[]>(columnsData);
+  const [columnsData, setColumnsData] = useState<IBlacklists[]>(blacklistsData);
+  const [userData, setUserData] = useState<IBlacklists[]>(columnsData);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     const filteredData = columnsData.filter((item) =>
-      item.gname.toLowerCase().includes(searchTerm.toLowerCase())
+      item.number.includes(searchTerm)
     );
     setUserData(filteredData);
   }, [searchTerm, columnsData]);
 
-  const form = useForm<z.infer<typeof groupFormSchema>>({
-    resolver: zodResolver(groupFormSchema),
+  const form = useForm<z.infer<typeof blacklistFormSchema>>({
+    resolver: zodResolver(blacklistFormSchema),
     defaultValues: {
-      gname: "",
-      link: "",
+      number: "",
+      reason: "",
+      admin: "",
     },
   });
 
   const handleCreate = () => {
     form.clearErrors();
+    form.setValue("number", "");
+    form.setValue("reason", "");
+    form.setValue("admin", "");
 
-    form.setValue("gname", "");
-    form.setValue("link", "");
     setOpenCreate(true);
   };
 
   const handleCreateSubmit = async (
-    values: z.infer<typeof groupFormSchema>
+    values: z.infer<typeof blacklistFormSchema>
   ) => {
     try {
       console.log("Submit", values);
@@ -74,38 +78,42 @@ export default function Groups() {
   };
 
   const handleEdit = (id: string) => {
-    const group = findGroupById(id, columnsData);
-    if (group) {
+    const blacklist = findBlacklistById(id, columnsData);
+    if (blacklist) {
       form.clearErrors();
-      form.setValue("gname", group.gname);
-      form.setValue("link", group.link);
+      form.setValue("number", blacklist.number);
+      form.setValue("reason", blacklist.reason);
+      form.setValue("admin", blacklist.admin);
     }
     setOpenEdit(true);
   };
 
-  const handleEditSubmit = async (values: z.infer<typeof groupFormSchema>) => {
+  const handleEditSubmit = async (
+    values: z.infer<typeof blacklistFormSchema>
+  ) => {
     try {
       console.log("Submit", values);
-      // TODO: Add logic to save the edited data (e.g., API call)
+      // TODO: Add logic to save the edited blacklist (e.g., API call)
     } catch (error) {
       console.error("Edit submission error:", error);
+    }
+  };
+
+  const handleDeletePopup = (id: string) => {
+    const blacklist = findBlacklistById(id, columnsData);
+    if (blacklist) {
+      setDeleteData({ id, organism: "Blacklist", name: blacklist.username });
+      setOpenDelete(true);
     }
   };
 
   const handleDelete = () => {
     if (deleteData) {
       setColumnsData(
-        columnsData.filter((group) => group.uuid !== deleteData.id)
+        columnsData.filter((blacklist) => blacklist.uuid !== deleteData.id)
       );
       setOpenDelete(false);
-    }
-  };
-
-  const handleDeletePopup = (id: string) => {
-    const group = findGroupById(id, columnsData);
-    if (group) {
-      setDeleteData({ id, organism: "Group", name: group.gname });
-      setOpenDelete(true);
+      // TODO: Add logic to delete from DB
     }
   };
 
@@ -119,7 +127,7 @@ export default function Groups() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="text-white my-4 w-[60%]"
         />
-        <Button onClick={handleCreate} className=" my-4 p-4 sm:m-5">
+        <Button onClick={handleCreate} className="my-4 p-4 sm:m-5">
           Create
         </Button>
       </div>
@@ -132,7 +140,7 @@ export default function Groups() {
         showDelete={true}
       />
       {openCreate && (
-        <DialogCreate<z.infer<typeof groupFormSchema>>
+        <DialogCreate<z.infer<typeof blacklistFormSchema>>
           open={openCreate}
           setOpen={() => setOpenCreate(false)}
           organism={"Member"}
@@ -141,10 +149,10 @@ export default function Groups() {
         />
       )}
       {openEdit && (
-        <DialogEdit<z.infer<typeof groupFormSchema>>
+        <DialogEdit<z.infer<typeof blacklistFormSchema>>
           open={openEdit}
           setOpen={() => setOpenEdit(false)}
-          organism={"Group"}
+          organism={"Blacklist"}
           form={form}
           onSubmit={handleEditSubmit}
         />
